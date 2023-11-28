@@ -12,19 +12,22 @@ const config = {
   },
 };
 
+const createTestMemcachedStore = <T = any>(props: Partial<MemcachedConfig<T>> = {}) => {
+  return createMemcachedStore({
+    driver: Memcache,
+    options: {
+      hosts: [process.env.MEMCACHED__HOST || config.memcached.host + ':' + config.memcached.port],
+      testOption: true,
+    },
+    ...props,
+  });
+};
+
 describe('memcached store', () => {
   let cache: Cache<MemcachedStore>;
 
   beforeAll(() => {
-    cache = caching(
-      createMemcachedStore({
-        driver: Memcache,
-        options: {
-          hosts: [process.env.MEMCACHED__HOST || config.memcached.host + ':' + config.memcached.port],
-          testOption: true,
-        },
-      }),
-    );
+    cache = caching(createTestMemcachedStore());
   });
 
   afterAll(async () => cache.reset());
@@ -60,6 +63,17 @@ describe('memcached store', () => {
       const result = await cache.get('foo1');
       expect(result).toBe(null);
     });
+
+    it('should discard non cacheable values', async () => {
+      const store = createTestMemcachedStore({ isCacheable: (value) => value !== 'bar' });
+      await store.reset();
+      await store.set('foo', 'bar');
+      await store.set('foo1', 'bar1');
+      const foo = await store.get('foo');
+      expect(foo).toBe(null);
+      const foo1 = await store.get('foo1');
+      expect(foo1).toBe('bar1');
+    });
   });
 
   describe('setMany', () => {
@@ -73,6 +87,19 @@ describe('memcached store', () => {
       const foo1 = await cache.get('foo1');
       expect(foo1).toBe('bar1');
     });
+
+    it('should filter out non cacheable values', async () => {
+      const store = createTestMemcachedStore({ isCacheable: (value) => value !== 'bar' });
+      await store.reset();
+      await store.setMany([
+        ['foo', 'bar'],
+        ['foo1', 'bar1'],
+      ]);
+      const foo = await store.get('foo');
+      expect(foo).toBe(null);
+      const foo1 = await store.get('foo1');
+      expect(foo1).toBe('bar1');
+    });
   });
 
   describe('get', () => {
@@ -82,6 +109,17 @@ describe('memcached store', () => {
       const result = await cache.get('foo');
       expect(result).toBe(value);
     });
+
+    it('should transform values', async () => {
+      const store = createTestMemcachedStore({ resultTransformer: (value) => (value === 'bar' ? 'barbar' : value) });
+      await store.reset();
+      await store.set('foo', 'bar');
+      await store.set('foo1', 'bar1');
+      const foo = await store.get('foo');
+      expect(foo).toBe('barbar');
+      const foo1 = await store.get('foo1');
+      expect(foo1).toBe('bar1');
+    });
   });
 
   describe('getMany', () => {
@@ -90,6 +128,17 @@ describe('memcached store', () => {
       await cache.set('foo1', 'bar1');
       const [foo, boo, foo1] = await cache.store.getMany('foo', 'boo', 'foo1');
       expect(foo).toBe('bar');
+      expect(boo).toBe(null);
+      expect(foo1).toBe('bar1');
+    });
+
+    it('should transform many values', async () => {
+      const store = createTestMemcachedStore({ resultTransformer: (value) => (value === 'bar' ? 'barbar' : value) });
+      await store.reset();
+      await store.set('foo', 'bar');
+      await store.set('foo1', 'bar1');
+      const [foo, boo, foo1] = await store.getMany('foo', 'boo', 'foo1');
+      expect(foo).toBe('barbar');
       expect(boo).toBe(null);
       expect(foo1).toBe('bar1');
     });
@@ -106,7 +155,7 @@ describe('memcached store', () => {
     });
   });
 
-  describe('detMany', () => {
+  describe('delMany', () => {
     it('should delete many values', async () => {
       await cache.set('foo', 'bar');
       await cache.set('foo1', 'bar1');
