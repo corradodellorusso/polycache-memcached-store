@@ -4,9 +4,25 @@ import { identity, isCacheable } from './utils';
 type Constructor<T> = new (...args: any[]) => T;
 
 export type MemcachedConfig<T = any> = {
+  /**
+   * Memcached client. It must be constructable with the new keyword.
+   */
   driver: Constructor<T>;
+  /**
+   * Options to pass to driver's constructor.
+   */
   options: Record<string, any>;
+  /**
+   * Check if a given parameter is cacheable or not.
+   * If none is passed, everything is cached excluding null and undefined.
+   * @param value
+   */
   isCacheable?: (value: unknown) => boolean;
+  /**
+   * Transform of get and getMany.
+   * By default no transformation is provided.
+   * @param value
+   */
   resultTransformer?: (value: unknown) => unknown;
 };
 
