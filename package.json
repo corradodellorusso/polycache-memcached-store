@@ -1,0 +1,60 @@
+{
+  "name": "polycache-memcached-store",
+  "version": "1.0.0",
+  "description": "Memcached module for polycache",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "test": "vitest run --coverage",
+    "release": "npm run check && npm run test -- --run && npm run build",
+    "prepare": "npm run build",
+    "fix": "npm run lint && npm run fmt",
+    "check": "npm run lint:check && npm run fmt:check",
+    "lint": "eslint --cache --max-warnings 0 --fix '**/*.{ts,mts,js}'",
+    "fmt": "prettier --write '**/*.{md,json,yml}'",
+    "lint:check": "eslint --cache --max-warnings 0 '**/*.{ts,mts,js}'",
+    "fmt:check": "prettier --check '**/*.{md,json,yml}'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/corradodellorusso/polycache-memcached-store.git"
+  },
+  "keywords": [
+    "cache",
+    "memcached",
+    "polycache",
+    "multiple cache"
+  ],
+  "authors": [
+    {
+      "name": "Corrado dello Russo",
+      "email": "info@corradodellorusso.it"
+    }
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "polycache-core": "1.x"
+  },
+  "devDependencies": {
+    "@types/node": "20.10.0",
+    "@typescript-eslint/eslint-plugin": "6.12.0",
+    "@typescript-eslint/parser": "6.12.0",
+    "@vitest/coverage-v8": "0.34.6",
+    "eslint": "8.54.0",
+    "eslint-config-prettier": "9.0.0",
+    "eslint-plugin-prettier": "5.0.1",
+    "lint-staged": "15.1.0",
+    "memcache-plus": "^0.3.0",
+    "prettier": "3.1.0",
+    "typescript": "5.3.2",
+    "vitest": "0.34.6"
+  },
+  "lint-staged": {
+    "*.{ts,js,mts,mjs}": "eslint --cache --fix",
+    "*.{md,json,yml}": "prettier --write"
+  }
+}
